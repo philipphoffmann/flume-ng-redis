@@ -1,0 +1,27 @@
+#############################################################################################################
+# Maintainer: Samir Elsayed <sel@plista.com> & Philipp Hoffmann <ph@plista.com>
+#
+# This pipeline consists of the following stages:
+#
+# - package (triggered by pushing changes to master/tags)
+#
+##############################################################################################################
+
+stages:
+  - package
+
+##############################################################################################################
+# Active Jobs - when desired, they can be deactivated by placing a dot in front of the job name
+##############################################################################################################
+
+package:
+  image: maven:latest
+  stage: package
+  only:
+    - master
+    - tags
+  script:
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
