@@ -30,6 +30,7 @@ public class RedisSubscribeDrivenSourceTest extends RedisSourceTestBase {
   @Before
   public void setUp() throws Exception {
     context.put("redisChannel", "flume-ng-redis-test");
+    context.put("redisHost", redisHost);
     source = new RedisSubscribeDrivenSource();
 
     super.setUp();
