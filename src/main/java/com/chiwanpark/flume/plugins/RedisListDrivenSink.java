@@ -8,6 +8,8 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.exceptions.JedisException;
 
 public class RedisListDrivenSink extends AbstractRedisSink {
@@ -15,11 +17,13 @@ public class RedisListDrivenSink extends AbstractRedisSink {
 
   private int redisDatabase;
   private byte[] redisList;
+  private int batchSize;
 
   @Override
   public void configure(Context context) {
     redisDatabase = context.getInteger("redisDatabase", 0);
     redisList = context.getString("redisList").getBytes();
+    batchSize = context.getInteger("batchSize", 1);
 
     Preconditions.checkNotNull(redisList, "Redis List must be set.");
 
@@ -55,18 +59,41 @@ public class RedisListDrivenSink extends AbstractRedisSink {
       transaction.begin();
       long startTime = System.nanoTime();
 
-      Event event = channel.take();
-      byte[] serialized = messageHandler.getBytes(event);
+      Pipeline pipeline = jedis.pipelined();
 
-      if (jedis.lpush(redisList, serialized) > 0) {
-        transaction.commit();
-        long endTime = System.nanoTime();
-        counter.incrementSinkSendTimeMicros((endTime - startTime) / (1000));
-        counter.incrementSinkSuccess();
-        status = Status.READY;
-      } else {
-        throw new EventDeliveryException("Event cannot be pushed into list " + redisList);
+      int processedEvents = 0;
+      for(; processedEvents < batchSize; processedEvents++) {
+        Event event = channel.take();
+        if (event == null) {
+          // channel is empty
+          if (processedEvents == 0) {
+            counter.incrementBatchEmptyCount();
+          }
+          // channel has less events than batchSize
+          counter.incrementBatchUnderflowCount();
+          break;
+        }
+        byte[] serialized = messageHandler.getBytes(event);
+
+        try {
+          pipeline.lpush(redisList, serialized);
+        } catch(JedisDataException e) {
+          throw new EventDeliveryException("Event cannot be pushed into list " + redisList + " due to an error in response " + e.getMessage());
+        }
       }
+
+      // channel has enough events for batchSize
+      if (processedEvents == batchSize) {
+        counter.incrementBatchCompleteCount();
+      }
+
+      pipeline.sync();
+      transaction.commit();
+      status = Status.READY;
+
+      long endTime = System.nanoTime();
+      counter.incrementSinkSendTimeMicros((endTime - startTime) / (1000));
+      counter.incrementSinkSuccess();
     } catch (Throwable e) {
       transaction.rollback();
       counter.incrementSinkRollback();

@@ -27,9 +27,11 @@ public abstract class RedisSourceTestBase {
   protected Channel channel = new MemoryChannel();
   protected ChannelSelector channelSelector = new ReplicatingChannelSelector();
   protected AbstractSource source;
+  protected String redisHost = System.getProperty("redisHost", "localhost");
 
   @Before
   public void setUp() throws Exception {
+    context.put("redisHost", redisHost);
     Configurables.configure(channel, context);
     channelSelector.setChannels(Lists.newArrayList(channel));
 
@@ -42,20 +44,20 @@ public abstract class RedisSourceTestBase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     source.stop();
   }
 
-  protected void publishMessageToRedis(String channel, String message) throws Exception {
-    Jedis jedis = new Jedis("localhost", 6379);
+  protected void publishMessageToRedis(String channel, String message) {
+    Jedis jedis = new Jedis(redisHost, 6379);
 
     jedis.publish(channel, message);
 
     jedis.disconnect();
   }
 
-  protected void addMessageToRedisList(String list, String message) throws Exception {
-    Jedis jedis = new Jedis("localhost", 6379);
+  protected void addMessageToRedisList(String list, String message) {
+    Jedis jedis = new Jedis(redisHost, 6379);
 
     jedis.lpush(list, message);
 

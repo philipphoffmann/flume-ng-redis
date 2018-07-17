@@ -3,16 +3,25 @@
 #
 # This pipeline consists of the following stages:
 #
+# - test (triggered by pushing changes to any branch)
 # - package (triggered by pushing changes to master/tags)
 #
 ##############################################################################################################
 
 stages:
+  - test
   - package
 
 ##############################################################################################################
 # Active Jobs - when desired, they can be deactivated by placing a dot in front of the job name
 ##############################################################################################################
+test:
+  image: maven:latest
+  stage: test
+  services:
+    - redis
+  script:
+    - mvn test -DredisHost=redis
 
 package:
   image: maven:latest

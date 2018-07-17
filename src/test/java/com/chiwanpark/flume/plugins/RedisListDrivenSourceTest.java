@@ -15,6 +15,7 @@ public class RedisListDrivenSourceTest extends RedisSourceTestBase {
   @Before
   public void setUp() throws Exception {
     context.put("redisList", "flume-ng-redis-test");
+    context.put("redisHost", redisHost);
     source = new RedisListDrivenSource();
 
     super.setUp();

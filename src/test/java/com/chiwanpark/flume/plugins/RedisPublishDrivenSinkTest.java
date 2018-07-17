@@ -16,49 +16,34 @@
 package com.chiwanpark.flume.plugins;
 
 import com.google.common.collect.Lists;
-import org.apache.flume.Channel;
-import org.apache.flume.ChannelSelector;
-import org.apache.flume.Context;
 import org.apache.flume.Transaction;
-import org.apache.flume.channel.MemoryChannel;
-import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.sink.AbstractSink;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-
 import java.nio.charset.Charset;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @RunWith(JUnit4.class)
-public class RedisPublishDrivenSinkTest {
-
+public class RedisPublishDrivenSinkTest extends RedisSinkTestBase{
   private static final String TEST_CHANNEL = "flume-ng-redis-test";
 
-  private Logger logger = LoggerFactory.getLogger(RedisPublishDrivenSinkTest.class);
-  private Context context = new Context();
-  private Channel channel = new MemoryChannel();
-  private ChannelSelector channelSelector = new ReplicatingChannelSelector();
-  private AbstractSink sink;
   private TestSubscriptionListener listener;
-  private Jedis jedis;
   private Thread thread;
 
   @Before
   public void setUp() throws Exception {
     context.clear();
     context.put("redisChannel", TEST_CHANNEL);
+    context.put("redisHost", redisHost);
 
     Configurables.configure(channel, context);
     channelSelector.setChannels(Lists.newArrayList(channel));
@@ -71,7 +56,7 @@ public class RedisPublishDrivenSinkTest {
     channel.start();
     Thread.sleep(1000);
 
-    jedis = new Jedis("localhost", 6379);
+    jedis = new Jedis(redisHost, 6379);
     listener = new TestSubscriptionListener();
 
     thread = new Thread(new Runnable() {
@@ -90,7 +75,7 @@ public class RedisPublishDrivenSinkTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     thread.interrupt();
 
     channel.stop();
