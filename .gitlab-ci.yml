@@ -29,6 +29,7 @@ package:
   only:
     - master
     - tags
+    - plista-changes
   script:
     - mvn package -DskipTests
   artifacts:
