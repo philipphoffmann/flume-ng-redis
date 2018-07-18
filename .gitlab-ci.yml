@@ -35,3 +35,4 @@ package:
   artifacts:
     paths:
       - target/*.jar
+    expire_in: '1 week'
