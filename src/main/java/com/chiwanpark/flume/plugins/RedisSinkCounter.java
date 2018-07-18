@@ -10,7 +10,11 @@ public class RedisSinkCounter extends SinkCounter implements RedisSinkCounterMBe
     private static final String[] ATTRIBUTES = new String[] {
         COUNTER_REDIS_SINK_SEND_TIME_MICROS,
         COUNTER_REDIS_SINK_ROLLBACK,
-        COUNTER_REDIS_SINK_SUCCESS
+        COUNTER_REDIS_SINK_SUCCESS,
+        // unfortunately we can't access the final constants in the parent class for the metrics below because they are private
+        "sink.batch.empty",
+        "sink.batch.underflow",
+        "sink.batch.complete"
     };
 
     public RedisSinkCounter(String name) {
