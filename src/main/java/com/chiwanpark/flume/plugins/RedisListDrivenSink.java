@@ -50,7 +50,7 @@ public class RedisListDrivenSink extends AbstractRedisSink {
 
   @Override
   public Status process() throws EventDeliveryException {
-    Status status = null;
+    Status status;
 
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
@@ -92,11 +92,12 @@ public class RedisListDrivenSink extends AbstractRedisSink {
       status = Status.READY;
 
       long endTime = System.nanoTime();
-      counter.incrementSinkSendTimeMicros((endTime - startTime) / (1000));
-      counter.incrementSinkSuccess();
+      counter.incrementBatchSendTimeMicros((endTime - startTime) / (1000));
+      counter.incrementBatchSuccess();
+      counter.incrementEventSuccess(processedEvents);
     } catch (Throwable e) {
       transaction.rollback();
-      counter.incrementSinkRollback();
+      counter.incrementBatchRollback();
       status = Status.BACKOFF;
 
       // we need to rethrow jedis exceptions, because they signal that something went wrong
