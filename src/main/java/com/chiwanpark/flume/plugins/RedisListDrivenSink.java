@@ -68,9 +68,10 @@ public class RedisListDrivenSink extends AbstractRedisSink {
           // channel is empty
           if (processedEvents == 0) {
             counter.incrementBatchEmptyCount();
+          } else {
+            // channel has less events than batchSize
+            counter.incrementBatchUnderflowCount();
           }
-          // channel has less events than batchSize
-          counter.incrementBatchUnderflowCount();
           break;
         }
         byte[] serialized = messageHandler.getBytes(event);
