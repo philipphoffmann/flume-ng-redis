@@ -51,13 +51,12 @@ public class RedisListDrivenSink extends AbstractRedisSink {
   @Override
   public Status process() throws EventDeliveryException {
     Status status;
-
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
+    long startTime = System.nanoTime();
 
     try {
       transaction.begin();
-      long startTime = System.nanoTime();
 
       Pipeline pipeline = jedis.pipelined();
 
@@ -92,8 +91,6 @@ public class RedisListDrivenSink extends AbstractRedisSink {
       transaction.commit();
       status = Status.READY;
 
-      long endTime = System.nanoTime();
-      counter.incrementBatchSendTimeMicros((endTime - startTime) / (1000));
       counter.incrementBatchSuccess();
       counter.incrementEventSuccess(processedEvents);
     } catch (Throwable e) {
@@ -114,6 +111,7 @@ public class RedisListDrivenSink extends AbstractRedisSink {
       }
     } finally {
       transaction.close();
+      counter.incrementBatchSendTimeMicros((System.nanoTime() - startTime) / 1000);
     }
 
     return status;
