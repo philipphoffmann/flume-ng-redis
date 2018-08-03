@@ -9,10 +9,6 @@ public class RedisSinkCounter extends SinkCounter implements RedisSinkCounterMBe
     private static final String COUNTER_SINK_BATCH_ROLLBACK = "sink.batch.rollback";
     private static final String COUNTER_SINK_EVENT_SUCCESS = "sink.event.success";
     private static final String COUNTER_SINK_BATCH_SUCCESS = "sink.batch.success";
-    private static final String COUNTER_BATCH_EMPTY = "sink.batch.empty";
-    private static final String COUNTER_BATCH_UNDERFLOW = "sink.batch.underflow";
-    private static final String COUNTER_BATCH_COMPLETE = "sink.batch.complete";
-
 
     private static final String[] ATTRIBUTES = new String[] {
             COUNTER_SINK_EVENT_SEND_TIME_MICROS,
@@ -20,11 +16,7 @@ public class RedisSinkCounter extends SinkCounter implements RedisSinkCounterMBe
             COUNTER_SINK_EVENT_ROLLBACK,
             COUNTER_SINK_BATCH_ROLLBACK,
             COUNTER_SINK_EVENT_SUCCESS,
-            COUNTER_SINK_BATCH_SUCCESS,
-            // unfortunately we can't access the final constants in the parent class for the metrics below because they are private
-            COUNTER_BATCH_EMPTY,
-            COUNTER_BATCH_UNDERFLOW,
-            COUNTER_BATCH_COMPLETE
+            COUNTER_SINK_BATCH_SUCCESS
     };
 
     public RedisSinkCounter(String name) {
