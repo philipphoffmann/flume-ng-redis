@@ -58,6 +58,15 @@ public class RedisListDrivenSink extends AbstractRedisSink {
     try {
       transaction.begin();
 
+      // try to connect in case connection to redis sink is lost
+      if (!jedis.isConnected()) {
+        counter.incrementConnectionFailedCount();
+        LOG.info("Connection appears to be lost to Redis sink, attempting to reconnect...");
+        LOG.info("Total connection attempts so far = " + counter.getConnectionFailedCount());
+        connectToRedisSink();
+        counter.incrementConnectionCreatedCount();
+      }
+
       Pipeline pipeline = jedis.pipelined();
 
       int processedEvents = 0;
@@ -98,10 +107,9 @@ public class RedisListDrivenSink extends AbstractRedisSink {
       counter.incrementBatchRollback();
       status = Status.BACKOFF;
 
-      // we need to rethrow jedis exceptions, because they signal that something went wrong
-      // with the connection to the redis server
       if (e instanceof JedisException) {
-        // TODO: we could try to reconnect and resend immediately
+        // we need to rethrow jedis exceptions, because they signal that something went wrong
+        // with the connection to the redis server
         jedis.disconnect();
         throw new EventDeliveryException(e);
       }

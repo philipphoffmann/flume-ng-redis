@@ -13,5 +13,6 @@ public interface RedisSinkCounterMBean {
     public long getBatchEmptyCount();
     public long getBatchUnderflowCount();
     public long getBatchCompleteCount();
-
+    public long getConnectionCreatedCount();
+    public long getConnectionFailedCount();
 }

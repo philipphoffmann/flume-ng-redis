@@ -21,21 +21,28 @@ public abstract class AbstractRedisSink extends AbstractSink implements Configur
   protected RedisMessageHandler messageHandler;
   protected RedisSinkCounter counter;
 
-  @Override
-  public synchronized void start() {
+  protected void connectToRedisSink() {
+    // connecting to Redis using a new BinaryJedis object as reusing the same object to reconnect seems to throw exceptions and the message gets sent multiple times!
+    // With a new object, the connection failure exception seems to be thrown only once and then the new connection takes over and picks up what was left off in the channel.
     jedis = new BinaryJedis(redisHost, redisPort, redisTimeout);
+
     if (!"".equals(redisPassword)) {
       jedis.auth(redisPassword);
     }
 
-    // try to connect here already to find out about problems early on
-    // TODO: we may need to throw a special kind of exception here
     jedis.connect();
-    counter.start();
-    super.start();
 
     LOG.info("Redis Connected. (host: " + redisHost + ", port: " + String.valueOf(redisPort)
-        + ", timeout: " + String.valueOf(redisTimeout) + ")");
+              + ", timeout: " + String.valueOf(redisTimeout) + ")");
+  }
+
+  @Override
+  public synchronized void start() {
+    connectToRedisSink();
+
+    counter.start();
+    counter.incrementConnectionCreatedCount();
+    super.start();
   }
 
   @Override
