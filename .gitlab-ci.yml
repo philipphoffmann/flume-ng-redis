@@ -16,7 +16,7 @@ stages:
 # Active Jobs - when desired, they can be deactivated by placing a dot in front of the job name
 ##############################################################################################################
 test:
-  image: maven:latest
+  image: maven:3-jdk-8
   stage: test
   services:
     - redis
@@ -24,7 +24,7 @@ test:
     - mvn test -DredisHost=redis
 
 package:
-  image: maven:latest
+  image: maven:3-jdk-8
   stage: package
   only:
     - master
