@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,11 +13,15 @@ public class RedisListDrivenSource extends AbstractRedisSource implements Pollab
 
   private int redisDatabase;
   private byte[] redisList;
+  private int backOffSleepIncrement;
+  private int maxBackOffSleepInterval;
 
   @Override
   public void configure(Context context) {
     redisDatabase = context.getInteger("redisDatabase", 0);
     redisList = context.getString("redisList").getBytes();
+    backOffSleepIncrement = context.getInteger("backOffSleepIncrement", 1000);
+    maxBackOffSleepInterval = context.getInteger("maxBackOffSleepInterval", 5000);
     Preconditions.checkNotNull(redisList, "Redis List must be set.");
 
     super.configure(context);
@@ -37,7 +40,7 @@ public class RedisListDrivenSource extends AbstractRedisSource implements Pollab
   }
 
   @Override
-  public Status process() throws EventDeliveryException {
+  public Status process() {
     byte[] serialized = jedis.rpop(redisList);
     if (serialized == null) {
       return Status.BACKOFF;
@@ -57,5 +60,15 @@ public class RedisListDrivenSource extends AbstractRedisSource implements Pollab
     }
 
     return Status.READY;
+  }
+
+  @Override
+  public long getBackOffSleepIncrement() {
+    return backOffSleepIncrement;
+  }
+
+  @Override
+  public long getMaxBackOffSleepInterval() {
+    return maxBackOffSleepInterval;
   }
 }
